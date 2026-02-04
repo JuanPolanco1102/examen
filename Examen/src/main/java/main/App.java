@@ -4,6 +4,7 @@ import dao.GenericDAO;
 import modelo.Proyecto;
 import util.GestorFicheros;
 import java.util.Scanner;
+import java.util.List;
 
 public class App {
     public static void main(String[] args) {
@@ -52,11 +53,11 @@ System.out.println("\n--- EXAMEN STEAM ---");
      break;
      case 5:
      System.out.print("Introduce el nombre del autor: ");
-             String autor = sc.nextLine();
+       String autor = sc.nextLine();
     // Uso de la función estrella 'findBy'
-         var resultados = dao.findBy("autor", autor);
-       
-                if(resultados.isEmpty()) System.out.println("No se encontraron proyectos.");
+         List<Proyecto> resultados = dao.findBy("autor", autor);
+    
+          if(resultados.isEmpty()) System.out.println("No se encontraron proyectos.");
             else resultados.forEach(System.out::println);
  break;
         case 0:
