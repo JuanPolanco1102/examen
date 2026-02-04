@@ -1,0 +1,26 @@
+<lista>
+    <proyecto>
+        <nombre>Robotica Basica</nombre>
+        <autor>Maria</autor>
+        <componentes>
+    <componente>
+   <nombreComp>Motor DC</nombreComp>
+ <precio>12.50</precio>
+      </componente>
+   <componente>
+  <nombreComp>Bateria</nombreComp>
+                <precio>5.00</precio>
+     </componente>
+  </componentes>
+    </proyecto>
+    <proyecto>
+        <nombre>Puente Hidraulico</nombre>
+        <autor>Juan</autor>
+        <componentes>
+      <componente>
+      <nombreComp>Jeringuilla</nombreComp>
+            <precio>1.20</precio>
+     </componente>
+        </componentes>
+    </proyecto>
+</lista>
