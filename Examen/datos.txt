@@ -1,0 +1,9 @@
+# Archivo de Proyectos STEAM
+# Formato: nombre|autor
+# ===========================
+
+Inteligencia Artificial|Carlos
+Aplicación Web|Sofia
+Sistema Embebido|Miguel
+Blockchain|Ana
+Computación Cuántica|David
