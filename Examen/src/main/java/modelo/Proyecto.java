@@ -5,34 +5,44 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CLASE PROYECTO - Entidad Padre del modelo de datos
+ * Representa un proyecto STEAM con nombre, autor y lista de componentes.
+ * Se mapea a la tabla "proyectos" en la base de datos MySQL.
+ */
 @Entity
 @Table(name = "proyectos")
 public class Proyecto implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // ID Autoincremental
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // ID Autoincremental en BD
     private Long id;
 
-    @Column(name = "nombre_proyecto")
+    @Column(name = "nombre_proyecto") // Nombre de columna en BD diferente al atributo
     private String nombre;
 
-private String autor;
+    private String autor; // No usa @Column: se mapea a columna "autor" por defecto
 
- // Relación 1 a N: Un proyecto tiene una lista de componentes
-    // Cascade Type ALL: Si guardo el Proyecto, se guardan solos sus componentes
+    // Relación 1 a N: Un proyecto tiene muchas componentes (ej: Robot tiene Motor, Batería)
+    // mappedBy="proyecto": el dueño de la relación es Componente.proyecto
+    // cascade=CascadeType.ALL: guardar/actualizar/borrar Proyecto propaga a Componentes
+    // fetch=EAGER: al cargar Proyecto, trae sus componentes automáticamente
     @OneToMany(mappedBy = "proyecto", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Componente> componentes = new ArrayList<>();
 
-    public Proyecto() {}
+    public Proyecto() {} // Constructor vacío requerido por Hibernate/JPA
 
     public Proyecto(String nombre, String autor) {
- this.nombre = nombre;
+        this.nombre = nombre;
         this.autor = autor;
     }
 
-    // Método helper para añadir componentes y mantener la coherencia
+    /**
+     * Añade un componente al proyecto y mantiene la relación bidireccional.
+     * Evita tener que llamar manualmente a c.setProyecto(this).
+     */
     public void addComponente(Componente c) {
-    componentes.add(c);
+        componentes.add(c);
         c.setProyecto(this);
     }
 

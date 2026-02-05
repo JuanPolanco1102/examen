@@ -9,11 +9,20 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.util.List;
 
+/**
+ * CLASE GestorFicheros - Gestión de importación/exportación de datos
+ * Soporta 4 formatos: XML (con subnodos), CSV, TXT y DAT (binario serializado).
+ * Todos los métodos leen o escriben Proyectos y los persisten en BD vía GenericDAO.
+ */
 public class GestorFicheros {
 
     GenericDAO<Proyecto> daoProyecto = new GenericDAO<>(Proyecto.class);
 
-    // --- 1. XML con SUBNODOS (DOM) ---
+    /**
+     * Carga proyectos desde XML usando DOM (Document Object Model).
+     * Lee nodos <proyecto> y sus subnodos <componente> para proyectos con piezas.
+     * Formato esperado: <proyecto><nombre/><autor/><componentes><componente>...
+     */
     public void cargarXML(String ruta) {
       try {
 File xmlFile = new File(ruta);
@@ -57,10 +66,12 @@ File xmlFile = new File(ruta);
         } catch (Exception e) {
   e.printStackTrace();
    }
-    }
+        }
 
-// --- 2. CSV (Texto con separadores) - LECTURA ---
-     // Formato esperado: nombreProyecto,autor
+    /**
+     * Carga proyectos desde CSV. Formato: nombreProyecto,autor
+     * Filtro: no importa líneas donde autor sea "Anonimo" (case insensitive).
+     */
     public void cargarCSV(String ruta) {
   try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
 String linea;
@@ -75,11 +86,13 @@ String linea;
     }
        } catch (IOException e) {
          e.printStackTrace();
-  }
+        }
     }
 
-    // --- 2b. CSV (Texto con separadores) - ESCRITURA ---
-    // Exporta todos los proyectos a CSV formato: nombre,autor
+    /**
+     * Exporta todos los proyectos de la BD a CSV.
+     * Formato: primera línea encabezados "nombre,autor", luego una línea por proyecto.
+     */
     public void exportarCSV(String ruta) {
         List<Proyecto> lista = daoProyecto.findAll();
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ruta))) {
@@ -99,8 +112,10 @@ String linea;
         }
     }
 
-     // --- 3. DAT (Binario - Serialización) - LECTURA ---
-    // Cargar lista de proyectos desde fichero binario
+    /**
+     * Carga proyectos desde archivo binario (serialización Java).
+     * Lee una List<Proyecto> previamente guardada con exportarBinario.
+     */
     public void cargarBinario(String ruta) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ruta))) {
      // Leer lista de proyectos del archivo binario
@@ -115,11 +130,13 @@ String linea;
       System.out.println("Total proyectos cargados desde binario: " + lista.size());
 } catch (IOException | ClassNotFoundException e) {
       e.printStackTrace();
-     }
+        }
     }
 
- // --- 3b. DAT (Binario - Serialización) - ESCRITURA ---
-    // Guardar lista de proyectos en fichero binario
+    /**
+     * Exporta todos los proyectos a archivo binario (backup).
+     * Serializa una List<Proyecto> para recuperación posterior.
+     */
     public void exportarBinario(String ruta) {
         List<Proyecto> lista = daoProyecto.findAll();
    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ruta))) {
@@ -132,8 +149,11 @@ String linea;
         }
     }
 
-    // --- 4. TXT (Texto plano) - LECTURA ---
-    // Formato esperado: Linea por proyecto "nombre|autor"
+    /**
+     * Carga proyectos desde TXT. Formato: nombre|autor (separador |)
+     * Ignora líneas vacías y las que empiezan por # (comentarios).
+     * No importa si nombre está vacío.
+     */
     public void cargarTXT(String ruta) {
         try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
             String linea;
@@ -166,8 +186,10 @@ String linea;
         }
     }
 
-    // --- 4b. TXT (Texto plano) - ESCRITURA ---
-    // Exporta todos los proyectos a TXT formato legible: nombre|autor
+    /**
+     * Exporta proyectos a TXT con formato legible.
+     * Incluye encabezado con comentarios (#) y formato nombre|autor.
+     */
     public void exportarTXT(String ruta) {
 List<Proyecto> lista = daoProyecto.findAll();
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ruta))) {

@@ -6,15 +6,23 @@ import org.hibernate.query.Query;
 import util.HibernateUtil;
 import java.util.List;
 
-// <T> significa que funciona para cualquier clase (Proyecto, Componente, Alumno...)
+/**
+ * CLASE GenericDAO - Patrón DAO (Data Access Object) genérico
+ * Proporciona operaciones CRUD reutilizables para cualquier entidad JPA.
+ * Usa HQL (Hibernate Query Language) en lugar de SQL crudo.
+ * <T> = tipo genérico: puede ser Proyecto, Componente, etc.
+ */
 public class GenericDAO<T> {
-    private Class<T> entityClass;
+    private Class<T> entityClass; // Ej: Proyecto.class
 
     public GenericDAO(Class<T> entityClass) {
-  this.entityClass = entityClass;
+        this.entityClass = entityClass;
     }
 
-// GUARDAR (Sirve para Insertar y Actualizar)
+    /**
+     * Guarda o actualiza una entidad en BD.
+     * saveOrUpdate: si tiene ID null -> INSERT, si existe -> UPDATE.
+     */
     public void save(T entity) {
     Session session = HibernateUtil.getSessionFactory().openSession();
    Transaction tx = null;
@@ -30,30 +38,33 @@ session.saveOrUpdate(entity); // Hibernate decide si es insert o update
    }
     }
 
-    // LISTAR TODOS (HQL)
+    /**
+     * Lista todas las entidades de la tabla.
+     * HQL: "FROM Proyecto" usa nombre de clase, no de tabla.
+     */
     public List<T> findAll() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-  // HQL: "FROM NombreClase" (No nombre tabla)
-           return session.createQuery("FROM " + entityClass.getSimpleName(), entityClass).list();
+            return session.createQuery("FROM " + entityClass.getSimpleName(), entityClass).list();
         }
-  }
+    }
 
-// BUSCAR POR CAMPO ESPECÍFICO (EL "findBy" QUE LE GUSTA)
-    // Ejemplo de uso: findBy("autor", "Juan");
- public List<T> findBy(String campo, Object valor) {
+    /**
+     * Busca entidades por un campo y valor concretos.
+     * Ej: findBy("autor", "Juan") -> todos los proyectos cuyo autor sea "Juan".
+     * Usa parámetros enlazados (:val) para evitar inyección SQL.
+     */
+    public List<T> findBy(String campo, Object valor) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-     // Construimos la query HQL dinámicamente
-      // "FROM Proyecto WHERE autor = :val"
-           String hql = "FROM " + entityClass.getSimpleName() + " WHERE " + campo + " = :val";
-            
-    Query<T> query = session.createQuery(hql, entityClass);
-         query.setParameter("val", valor); // Seteamos el parámetro (seguro contra inyección)
-        
+            String hql = "FROM " + entityClass.getSimpleName() + " WHERE " + campo + " = :val";
+            Query<T> query = session.createQuery(hql, entityClass);
+            query.setParameter("val", valor);
             return query.list();
+        }
     }
-    }
- 
-    // BORRAR
+
+    /**
+     * Elimina una entidad de la base de datos.
+     */
     public void delete(T entity) {
          Session session = HibernateUtil.getSessionFactory().openSession();
     Transaction tx = session.beginTransaction();

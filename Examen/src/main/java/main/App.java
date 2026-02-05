@@ -6,16 +6,18 @@ import util.GestorFicheros;
 import java.util.Scanner;
 import java.util.List;
 
+/**
+ * CLASE App - Punto de entrada de la aplicación "Examen STEAM"
+ * Menú interactivo por consola para importar/exportar proyectos
+ * en múltiples formatos y consultar la base de datos Hibernate.
+ */
 public class App {
     public static void main(String[] args) {
-        // Inicializamos herramientas
-     Scanner sc = new Scanner(System.in);
-      GestorFicheros gestor = new GestorFicheros();
-   GenericDAO<Proyecto> dao = new GenericDAO<>(Proyecto.class);
+        Scanner sc = new Scanner(System.in);
+        GestorFicheros gestor = new GestorFicheros();  // Importar/exportar archivos
+        GenericDAO<Proyecto> dao = new GenericDAO<>(Proyecto.class);  // Acceso a BD
 
-    int opcion = -1;
-        
-        // Bucle del menú
+        int opcion = -1;
         while (opcion != 0) {
             System.out.println("\n========================================");
      System.out.println("        --- EXAMEN STEAM ---");
@@ -36,14 +38,14 @@ public class App {
          System.out.println("========================================");
    System.out.print("Elige opción: ");
             
-   // Control de errores básico
-            try {
-    opcion = Integer.parseInt(sc.nextLine());
- } catch (NumberFormatException e) {
- opcion = -1;
-            }
+        // Control de entrada: si el usuario escribe texto, opcion=-1 y mostrará "no válida"
+        try {
+            opcion = Integer.parseInt(sc.nextLine());
+        } catch (NumberFormatException e) {
+            opcion = -1;
+        }
 
-            switch (opcion) {
+        switch (opcion) {
           case 1:
      // Cargar desde XML
   System.out.println("\nCargando datos desde XML...");
@@ -69,9 +71,9 @@ public class App {
       break;
         
         case 5:
-   // Mostrar todos los proyectos
-    System.out.println("\n--- LISTADO DE PROYECTOS (HQL) ---");
- List<Proyecto> todos = dao.findAll();
+            // findAll() ejecuta HQL: "FROM Proyecto"
+            System.out.println("\n--- LISTADO DE PROYECTOS (HQL) ---");
+            List<Proyecto> todos = dao.findAll();
  if (todos.isEmpty()) {
            System.out.println("No hay proyectos en la base de datos.");
       } else {
@@ -80,13 +82,11 @@ public class App {
         break;
         
         case 6:
-           // Buscar por Autor (findBy)
-                  System.out.print("\nIntroduce el nombre del autor a buscar: ");
-           String autor = sc.nextLine();
-   System.out.println("\nBuscando proyectos de: " + autor);
-        
- // Uso de la función estrella 'findBy' con HQL
-     List<Proyecto> resultados = dao.findBy("autor", autor);
+            // findBy genera HQL: "FROM Proyecto WHERE autor = :val"
+            System.out.print("\nIntroduce el nombre del autor a buscar: ");
+            String autor = sc.nextLine();
+            System.out.println("\nBuscando proyectos de: " + autor);
+            List<Proyecto> resultados = dao.findBy("autor", autor);
         
       if (resultados.isEmpty()) {
       System.out.println("No se encontraron proyectos del autor: " + autor);

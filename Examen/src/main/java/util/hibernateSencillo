@@ -1,0 +1,183 @@
+package util;
+
+import modelo.Proyecto;
+import modelo.Componente;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import java.util.List;
+
+/**
+ * KIT DE SUPERVIVENCIA HIBERNATE - VERSIÓN COMPLETA (SEGURA)
+ * * Esta clase contiene TODAS las variantes de HQL que aparecían en el archivo gigante,
+ * pero limpias de 'SQL Nativo' y 'Criteria' que no debes usar.
+ * * REGLAS:
+ * 1. Siempre usa: session.createQuery("FROM Clase...")
+ * 2. Nunca uses: session.createNativeQuery("SELECT * FROM tabla...") -> SUSPENSO DIRECTO.
+ */
+public class HibernateCompletoExamen {
+
+    // ========================================================================
+    // 1. BÚSQUEDAS BÁSICAS (Las obligatorias)
+    // ========================================================================
+
+    /**
+     * CASO DE USO: "Listar todos los proyectos".
+     * Es el equivalente a SELECT * FROM.
+     */
+    public List<Proyecto> listarTodos() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM Proyecto", Proyecto.class).list();
+        }
+    }
+
+    /**
+     * CASO DE USO: "Buscar por un campo exacto (DNI, Nombre, Autor)".
+     * IMPORTANTE: Usar :parametro para evitar inyección SQL (y cumplir requisitos).
+     */
+    public List<Proyecto> buscarPorAutor(String autorBuscado) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // HQL: Referencia a la CLASE y ATRIBUTO, no a la tabla.
+            String hql = "FROM Proyecto WHERE autor = :val";
+            
+            Query<Proyecto> query = session.createQuery(hql, Proyecto.class);
+            query.setParameter("val", autorBuscado);
+            
+            return query.list();
+        }
+    }
+
+    // ========================================================================
+    // 2. BÚSQUEDAS AVANZADAS (Sacadas de tu archivo grande, pero en HQL)
+    // ========================================================================
+
+    /**
+     * CASO DE USO: "Busca proyectos que CONTENGAN la palabra 'Robot'".
+     * Del archivo original: ejemplo16_SelectConLike
+     */
+    public List<Proyecto> buscarCoincidencias(String palabraClave) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // LIKE funciona igual que en SQL.
+            String hql = "FROM Proyecto WHERE nombre LIKE :patron";
+            
+            Query<Proyecto> query = session.createQuery(hql, Proyecto.class);
+            // Los porcentajes % significan "cualquier texto antes o después"
+            query.setParameter("patron", "%" + palabraClave + "%");
+            
+            return query.list();
+        }
+    }
+
+    /**
+     * CASO DE USO: "Busca componentes con precio entre 10 y 50 euros".
+     * Del archivo original: ejemplo44_Between
+     */
+    public List<Componente> buscarPorRangoPrecio(double min, double max) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // BETWEEN incluye los extremos.
+            String hql = "FROM Componente WHERE precio BETWEEN :min AND :max";
+            
+            Query<Componente> query = session.createQuery(hql, Componente.class);
+            query.setParameter("min", min);
+            query.setParameter("max", max);
+            
+            return query.list();
+        }
+    }
+
+    /**
+     * CASO DE USO: "Dame los proyectos ORDENADOS por autor alfabéticamente".
+     * Del archivo original: ejemplo8_SelectConOrderBy
+     */
+    public List<Proyecto> listarOrdenados() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // ASC = Ascendente (A-Z), DESC = Descendente (Z-A)
+            String hql = "FROM Proyecto ORDER BY autor ASC";
+            return session.createQuery(hql, Proyecto.class).list();
+        }
+    }
+
+    /**
+     * CASO DE USO: "Proyectos donde el autor NO esté vacío".
+     * Del archivo original: ejemplo45_IsNull
+     */
+    public List<Proyecto> buscarConAutorConocido() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // IS NOT NULL verifica que haya dato
+            String hql = "FROM Proyecto WHERE autor IS NOT NULL";
+            return session.createQuery(hql, Proyecto.class).list();
+        }
+    }
+
+    // ========================================================================
+    // 3. AGREGACIONES (Matemáticas)
+    // ========================================================================
+
+    /**
+     * CASO DE USO: "¿Cuántos proyectos hay en total?".
+     * Del archivo original: ejemplo10_SelectConCount
+     */
+    public Long contarProyectos() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // Devuelve un solo número (Long)
+            String hql = "SELECT COUNT(p) FROM Proyecto p";
+            return (Long) session.createQuery(hql).uniqueResult();
+        }
+    }
+
+    /**
+     * CASO DE USO: "¿Cuál es el componente más caro?".
+     * Uso de MAX (Máximo).
+     */
+    public Double obtenerPrecioMaximo() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT MAX(c.precio) FROM Componente c";
+            return (Double) session.createQuery(hql).uniqueResult();
+        }
+    }
+
+    // ========================================================================
+    // 4. MODIFICACIÓN DE DATOS (CRUD)
+    // ========================================================================
+
+    /**
+     * CASO DE USO: "Guardar lo leído de un Fichero".
+     * Del archivo original: ejemplo29_Insert
+     */
+    public void guardar(Object entidad) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = session.beginTransaction(); // ¡Obligatorio para guardar!
+        
+        try {
+            // saveOrUpdate es más seguro que save:
+            // Si tiene ID -> Actualiza. Si no -> Crea nuevo.
+            session.saveOrUpdate(entidad);
+            tx.commit(); // Confirmar cambios
+        } catch (Exception e) {
+            if (tx != null) tx.rollback(); // Deshacer si falla
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+
+    /**
+     * CASO DE USO: "Borrar un registro por ID".
+     * Del archivo original: ejemplo32_Delete
+     */
+    public void borrar(Long id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = session.beginTransaction();
+        
+        // 1. Primero hay que traer el objeto a la memoria
+        Proyecto p = session.get(Proyecto.class, id);
+        
+        // 2. Si existe, lo borramos
+        if (p != null) {
+            session.delete(p);
+        }
+        
+        tx.commit();
+        session.close();
+    }
+}
